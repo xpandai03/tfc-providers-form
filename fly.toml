@@ -1,35 +1,23 @@
-# fly.toml — TFC Provider Availability Form
+# fly.toml app configuration file generated for tfc-providers-form on 2026-05-01T04:28:19Z
 #
-# Deploys the Vite-built SPA behind nginx.
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
-# IMPORTANT: VITE_CRM_API_URL and VITE_PROVIDER_FORM_API_KEY are baked
-# into the bundle at BUILD time. Set them as Fly build secrets, not
-# runtime secrets:
-#
-#   fly secrets set --stage \
-#     VITE_CRM_API_URL=https://tfc-crm-2-0.fly.dev \
-#     VITE_PROVIDER_FORM_API_KEY=<shared-secret>
-#   fly deploy \
-#     --build-arg VITE_CRM_API_URL=https://tfc-crm-2-0.fly.dev \
-#     --build-arg VITE_PROVIDER_FORM_API_KEY=<shared-secret>
-#
-# (Or wire them via fly.toml [build.args], but those land in your shell
-# history and the toml file — prefer --build-arg from a one-shot env.)
 
-app = "tfc-provider-form"
-primary_region = "sjc"
+app = 'tfc-providers-form'
+primary_region = 'ams'
 
 [build]
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]
+  processes = ['app']
 
 [[vm]]
-  memory = "256mb"
-  cpu_kind = "shared"
+  memory = '256mb'
+  cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 256
