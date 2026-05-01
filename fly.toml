@@ -16,8 +16,8 @@
 # (Or wire them via fly.toml [build.args], but those land in your shell
 # history and the toml file — prefer --build-arg from a one-shot env.)
 
-app = "tfc-provider-form"
-primary_region = "sjc"
+app = "tfc-providers-form"
+primary_region = "ams"
 
 [build]
 
