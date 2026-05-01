@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 220 20% 96%;
+  --foreground: 0 0% 9%;
+  --border: 220 10% 88%;
+  --input: 0 0% 75%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 9%;
+  --card-border: 0 0% 94%;
+
+  --primary: 210 85% 45%;
+  --primary-foreground: 0 0% 98%;
+
+  --secondary: 0 0% 90%;
+  --secondary-foreground: 0 0% 9%;
+
+  --muted: 0 0% 92%;
+  --muted-foreground: 0 0% 35%;
+
+  --accent: 210 15% 94%;
+  --accent-foreground: 210 15% 15%;
+
+  --destructive: 0 75% 42%;
+  --destructive-foreground: 0 0% 98%;
+
+  --ring: 210 85% 45%;
+
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html,
+  body,
+  #root {
+    @apply h-full;
+  }
+  body {
+    @apply font-sans antialiased text-foreground;
+    background: linear-gradient(180deg, hsl(210 60% 96%) 0%, hsl(210 35% 92%) 100%);
+    background-attachment: fixed;
+  }
+}
