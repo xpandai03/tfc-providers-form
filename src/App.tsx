@@ -25,7 +25,7 @@ function App() {
           <img
             src={TFC_LOGO_URL}
             alt="The Family Connection"
-            className="h-16 w-auto mb-4 rounded-md"
+            className="h-20 w-auto mb-4 mix-blend-multiply"
           />
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             Provider Availability Update
