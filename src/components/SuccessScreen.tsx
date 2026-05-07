@@ -1,28 +1,27 @@
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { AvailabilityWeek, SubmissionSuccess } from "@/lib/types";
-import { WEEKDAYS } from "@/lib/types";
-import { formatBlockLabel, isWeekEmpty } from "@/lib/availability";
+import type { SubmissionSuccess } from "@/lib/types";
 
 interface SuccessScreenProps {
   data: SubmissionSuccess;
-  acceptingIndividual: number;
-  acceptingCouples: number;
-  acceptingFamily: number;
-  availability: AvailabilityWeek | null;
+  acceptingClients: number;
+  specialConsiderations?: string;
   onReset: () => void;
 }
 
 export function SuccessScreen({
   data,
-  acceptingIndividual,
-  acceptingCouples,
-  acceptingFamily,
-  availability,
+  acceptingClients,
+  specialConsiderations,
   onReset,
 }: SuccessScreenProps) {
-  const weekEmpty = !availability || isWeekEmpty(availability);
+  const headline =
+    acceptingClients === 0
+      ? "Got it — we'll pause new assignments to you for now."
+      : `We've recorded that you're accepting ${acceptingClients} new ${
+          acceptingClients === 1 ? "client" : "clients"
+        }.`;
 
   return (
     <Card className="animate-fade-in">
@@ -36,61 +35,31 @@ export function SuccessScreen({
             <h2 className="text-2xl font-semibold tracking-tight">
               Thanks, {data.providerName}!
             </h2>
-            <p className="text-muted-foreground">
-              Your availability has been updated. The TFC team will use this for
-              new client matches going forward.
-            </p>
+            <p className="text-muted-foreground">{headline}</p>
           </div>
         </div>
 
         <div className="mt-8 space-y-6">
           <section>
             <h3 className="text-sm font-semibold text-foreground/80 mb-2">
-              New clients you're accepting
+              Accepting new clients
             </h3>
-            <dl className="grid grid-cols-3 gap-3 text-sm">
-              <div className="rounded-md border border-border p-3 bg-muted/30">
-                <dt className="text-xs text-muted-foreground">Individual</dt>
-                <dd className="text-lg font-semibold">{acceptingIndividual}</dd>
-              </div>
-              <div className="rounded-md border border-border p-3 bg-muted/30">
-                <dt className="text-xs text-muted-foreground">Couples</dt>
-                <dd className="text-lg font-semibold">{acceptingCouples}</dd>
-              </div>
-              <div className="rounded-md border border-border p-3 bg-muted/30">
-                <dt className="text-xs text-muted-foreground">Family</dt>
-                <dd className="text-lg font-semibold">{acceptingFamily}</dd>
-              </div>
-            </dl>
+            <div className="rounded-md border border-border p-3 bg-muted/30 inline-block min-w-[120px]">
+              <div className="text-xs text-muted-foreground">Total</div>
+              <div className="text-2xl font-semibold">{acceptingClients}</div>
+            </div>
           </section>
 
-          <section>
-            <h3 className="text-sm font-semibold text-foreground/80 mb-2">
-              Scheduling windows
-            </h3>
-            {weekEmpty ? (
-              <p className="text-sm text-muted-foreground">
-                No specific windows submitted.
+          {specialConsiderations ? (
+            <section>
+              <h3 className="text-sm font-semibold text-foreground/80 mb-2">
+                Special considerations
+              </h3>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap rounded-md border border-border p-3 bg-muted/30">
+                {specialConsiderations}
               </p>
-            ) : (
-              <ul className="space-y-1.5 text-sm">
-                {WEEKDAYS.map(({ key, label }) => {
-                  const blocks = availability?.[key] ?? [];
-                  if (blocks.length === 0) return null;
-                  return (
-                    <li key={key} className="flex gap-3">
-                      <span className="font-medium text-foreground/80 w-12 shrink-0">
-                        {label}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {blocks.map((b) => formatBlockLabel(b.start, b.end)).join(", ")}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
+            </section>
+          ) : null}
         </div>
 
         <div className="mt-8 pt-6 border-t border-border flex items-center justify-between text-sm">

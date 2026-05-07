@@ -1,19 +1,20 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AvailabilityGrid } from "@/components/AvailabilityGrid";
-import { selectionToWeek, isWeekEmpty } from "@/lib/availability";
-import { submissionPayloadSchema, type SubmissionPayload, type SubmissionSuccess } from "@/lib/types";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  submissionPayloadSchema,
+  SPECIAL_CONSIDERATIONS_MAX,
+  type SubmissionSuccess,
+} from "@/lib/types";
 import { submitAvailability } from "@/lib/api";
 
-type FieldErrors = Partial<Record<
-  "providerEmail" | "acceptingIndividual" | "acceptingCouples" | "acceptingFamily",
-  string
->>;
+type FieldKey = "email" | "acceptingClients" | "specialConsiderations";
+type FieldErrors = Partial<Record<FieldKey, string>>;
 
 type TopError =
   | { kind: "not_found"; email: string }
@@ -21,39 +22,34 @@ type TopError =
   | { kind: "server"; message?: string }
   | { kind: "network"; message: string };
 
+interface SubmittedFields {
+  acceptingClients: number;
+  specialConsiderations?: string;
+}
+
 interface ProviderFormProps {
-  onSuccess: (
-    data: SubmissionSuccess,
-    submitted: { acceptingIndividual: number; acceptingCouples: number; acceptingFamily: number; availability: SubmissionPayload["availability"] },
-  ) => void;
+  onSuccess: (data: SubmissionSuccess, submitted: SubmittedFields) => void;
 }
 
 export function ProviderForm({ onSuccess }: ProviderFormProps) {
   const [email, setEmail] = useState("");
-  const [individual, setIndividual] = useState<string>("0");
-  const [couples, setCouples] = useState<string>("0");
-  const [family, setFamily] = useState<string>("0");
-  const [selection, setSelection] = useState<Set<string>>(new Set());
+  const [acceptingClients, setAcceptingClients] = useState<string>("0");
+  const [specialConsiderations, setSpecialConsiderations] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [topError, setTopError] = useState<TopError | null>(null);
-
-  const availability = useMemo(() => {
-    const week = selectionToWeek(selection);
-    return isWeekEmpty(week) ? null : week;
-  }, [selection]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFieldErrors({});
     setTopError(null);
 
+    const trimmedConsiderations = specialConsiderations.trim();
     const payload = {
-      providerEmail: email.trim(),
-      acceptingIndividual: toIntOrNaN(individual),
-      acceptingCouples: toIntOrNaN(couples),
-      acceptingFamily: toIntOrNaN(family),
-      availability,
+      email: email.trim(),
+      acceptingClients: toIntOrNaN(acceptingClients),
+      specialConsiderations: trimmedConsiderations === "" ? undefined : trimmedConsiderations,
+      submittedAt: new Date().toISOString(),
     };
 
     const parsed = submissionPayloadSchema.safeParse(payload);
@@ -61,14 +57,7 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
       const errs: FieldErrors = {};
       for (const issue of parsed.error.issues) {
         const key = issue.path[0];
-        if (
-          key === "providerEmail" ||
-          key === "acceptingIndividual" ||
-          key === "acceptingCouples" ||
-          key === "acceptingFamily"
-        ) {
-          if (!errs[key]) errs[key] = issue.message;
-        }
+        if (isFieldKey(key) && !errs[key]) errs[key] = issue.message;
       }
       setFieldErrors(errs);
       return;
@@ -81,27 +70,21 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
     switch (result.status) {
       case "success":
         onSuccess(result.data, {
-          acceptingIndividual: parsed.data.acceptingIndividual,
-          acceptingCouples: parsed.data.acceptingCouples,
-          acceptingFamily: parsed.data.acceptingFamily,
-          availability: parsed.data.availability,
+          acceptingClients: parsed.data.acceptingClients,
+          specialConsiderations: parsed.data.specialConsiderations,
         });
         return;
       case "validation_error": {
         const errs: FieldErrors = {};
         for (const issue of result.issues) {
           const key = issue.path[0];
-          if (
-            key === "providerEmail" ||
-            key === "acceptingIndividual" ||
-            key === "acceptingCouples" ||
-            key === "acceptingFamily"
-          ) {
-            if (!errs[key]) errs[key] = issue.message;
-          }
+          if (isFieldKey(key) && !errs[key]) errs[key] = issue.message;
         }
         if (Object.keys(errs).length === 0) {
-          setTopError({ kind: "server", message: "The server flagged the submission as invalid. Please review and try again." });
+          setTopError({
+            kind: "server",
+            message: "The server flagged the submission as invalid. Please review and try again.",
+          });
         } else {
           setFieldErrors(errs);
         }
@@ -124,6 +107,9 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
     }
   };
 
+  const considerationsLen = specialConsiderations.length;
+  const considerationsOver = considerationsLen > SPECIAL_CONSIDERATIONS_MAX;
+
   return (
     <form onSubmit={onSubmit} className="space-y-6" noValidate>
       {topError ? <TopErrorAlert error={topError} /> : null}
@@ -142,13 +128,13 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
               placeholder="firstname@tfc.health"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              aria-invalid={fieldErrors.providerEmail ? true : undefined}
-              aria-describedby={fieldErrors.providerEmail ? "email-error" : "email-help"}
+              aria-invalid={fieldErrors.email ? true : undefined}
+              aria-describedby={fieldErrors.email ? "email-error" : "email-help"}
               disabled={submitting}
             />
-            {fieldErrors.providerEmail ? (
+            {fieldErrors.email ? (
               <p id="email-error" className="text-sm text-destructive">
-                {fieldErrors.providerEmail}
+                {fieldErrors.email}
               </p>
             ) : (
               <p id="email-help" className="text-sm text-muted-foreground">
@@ -161,72 +147,80 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>How many new clients are you accepting?</CardTitle>
+          <CardTitle>Your availability</CardTitle>
           <CardDescription>
-            Enter 0 for any type you're not accepting right now. You can update this anytime.
+            Tell us how many new clients you're accepting and anything we should know when matching.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <CountField
-              id="count-individual"
-              label="Individual"
-              value={individual}
-              onChange={setIndividual}
-              error={fieldErrors.acceptingIndividual}
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="accepting-clients">How many new clients are you accepting?</Label>
+            <Input
+              id="accepting-clients"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              step={1}
+              value={acceptingClients}
+              onChange={(e) => setAcceptingClients(e.target.value)}
+              aria-invalid={fieldErrors.acceptingClients ? true : undefined}
+              aria-describedby={
+                fieldErrors.acceptingClients ? "accepting-clients-error" : "accepting-clients-help"
+              }
               disabled={submitting}
+              className="sm:max-w-[160px]"
             />
-            <CountField
-              id="count-couples"
-              label="Couples"
-              value={couples}
-              onChange={setCouples}
-              error={fieldErrors.acceptingCouples}
-              disabled={submitting}
-            />
-            <CountField
-              id="count-family"
-              label="Family"
-              value={family}
-              onChange={setFamily}
-              error={fieldErrors.acceptingFamily}
-              disabled={submitting}
-            />
+            {fieldErrors.acceptingClients ? (
+              <p id="accepting-clients-error" className="text-sm text-destructive">
+                {fieldErrors.acceptingClients}
+              </p>
+            ) : (
+              <p id="accepting-clients-help" className="text-sm text-muted-foreground">
+                Enter 0 if you're full right now. You can update this anytime.
+              </p>
+            )}
           </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1.5">
-              <CardTitle>When are you available?</CardTitle>
-              <CardDescription>
-                Click and drag across the grid to mark times you're available. Click selected blocks to remove them. This helps us schedule clients into slots that work for you.
-              </CardDescription>
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between gap-3">
+              <Label htmlFor="special-considerations">
+                Special considerations <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <span
+                className={
+                  considerationsOver
+                    ? "text-xs text-destructive"
+                    : "text-xs text-muted-foreground"
+                }
+                aria-live="polite"
+              >
+                {considerationsLen} / {SPECIAL_CONSIDERATIONS_MAX}
+              </span>
             </div>
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-              Optional, but helpful
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <AvailabilityGrid selection={selection} onChange={setSelection} />
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              {selection.size === 0
-                ? "No times selected"
-                : `${selection.size} half-hour ${selection.size === 1 ? "block" : "blocks"} selected`}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={selection.size === 0 || submitting}
-              onClick={() => setSelection(new Set())}
-            >
-              Clear selection
-            </Button>
+            <Textarea
+              id="special-considerations"
+              placeholder="e.g. prefer afternoon clients, no new trauma intakes for the next month"
+              value={specialConsiderations}
+              onChange={(e) => setSpecialConsiderations(e.target.value)}
+              maxLength={SPECIAL_CONSIDERATIONS_MAX}
+              aria-invalid={fieldErrors.specialConsiderations ? true : undefined}
+              aria-describedby={
+                fieldErrors.specialConsiderations
+                  ? "special-considerations-error"
+                  : "special-considerations-help"
+              }
+              disabled={submitting}
+              rows={4}
+            />
+            {fieldErrors.specialConsiderations ? (
+              <p id="special-considerations-error" className="text-sm text-destructive">
+                {fieldErrors.specialConsiderations}
+              </p>
+            ) : (
+              <p id="special-considerations-help" className="text-sm text-muted-foreground">
+                Anything the team should know when matching clients to you (preferences, capacity nuances, time-bound notes).
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -240,45 +234,6 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
         </p>
       </div>
     </form>
-  );
-}
-
-function CountField({
-  id,
-  label,
-  value,
-  onChange,
-  error,
-  disabled,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  error: string | undefined;
-  disabled: boolean;
-}) {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        type="number"
-        inputMode="numeric"
-        min={0}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : undefined}
-        disabled={disabled}
-      />
-      {error ? (
-        <p id={`${id}-error`} className="text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-    </div>
   );
 }
 
@@ -310,6 +265,10 @@ function TopErrorAlert({ error }: { error: TopError }) {
       <AlertDescription>{body}</AlertDescription>
     </Alert>
   );
+}
+
+function isFieldKey(k: unknown): k is FieldKey {
+  return k === "email" || k === "acceptingClients" || k === "specialConsiderations";
 }
 
 function toIntOrNaN(s: string): number {

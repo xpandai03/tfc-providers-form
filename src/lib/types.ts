@@ -1,51 +1,28 @@
 import { z } from "zod";
 
-export const availabilityBlockSchema = z.object({
-  start: z.string().regex(/^\d{2}:\d{2}$/, "start must be HH:MM"),
-  end: z.string().regex(/^\d{2}:\d{2}$/, "end must be HH:MM"),
-});
-
-export const availabilityWeekSchema = z.object({
-  mon: z.array(availabilityBlockSchema),
-  tue: z.array(availabilityBlockSchema),
-  wed: z.array(availabilityBlockSchema),
-  thu: z.array(availabilityBlockSchema),
-  fri: z.array(availabilityBlockSchema),
-});
+export const SPECIAL_CONSIDERATIONS_MAX = 500;
+export const ACCEPTING_CLIENTS_MAX = 50;
 
 export const submissionPayloadSchema = z.object({
-  providerEmail: z
+  email: z
     .string()
     .trim()
     .min(1, "Please enter your email address")
     .email("Please enter a valid email address"),
-  acceptingIndividual: z
+  acceptingClients: z
     .number({ invalid_type_error: "Enter a whole number (0 or more)" })
     .int("Enter a whole number")
-    .nonnegative("Must be 0 or more"),
-  acceptingCouples: z
-    .number({ invalid_type_error: "Enter a whole number (0 or more)" })
-    .int("Enter a whole number")
-    .nonnegative("Must be 0 or more"),
-  acceptingFamily: z
-    .number({ invalid_type_error: "Enter a whole number (0 or more)" })
-    .int("Enter a whole number")
-    .nonnegative("Must be 0 or more"),
-  availability: availabilityWeekSchema.nullable(),
+    .min(0, "Must be 0 or more")
+    .max(ACCEPTING_CLIENTS_MAX, `Must be ${ACCEPTING_CLIENTS_MAX} or fewer`),
+  specialConsiderations: z
+    .string()
+    .trim()
+    .max(SPECIAL_CONSIDERATIONS_MAX, `Keep it under ${SPECIAL_CONSIDERATIONS_MAX} characters`)
+    .optional(),
+  submittedAt: z.string(),
 });
 
-export type AvailabilityBlock = z.infer<typeof availabilityBlockSchema>;
-export type AvailabilityWeek = z.infer<typeof availabilityWeekSchema>;
 export type SubmissionPayload = z.infer<typeof submissionPayloadSchema>;
-
-export type WeekdayKey = keyof AvailabilityWeek;
-export const WEEKDAYS: { key: WeekdayKey; label: string }[] = [
-  { key: "mon", label: "Mon" },
-  { key: "tue", label: "Tue" },
-  { key: "wed", label: "Wed" },
-  { key: "thu", label: "Thu" },
-  { key: "fri", label: "Fri" },
-];
 
 export interface SubmissionSuccess {
   success: true;

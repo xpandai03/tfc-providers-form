@@ -1,16 +1,14 @@
 import { useState } from "react";
 import { ProviderForm } from "@/components/ProviderForm";
 import { SuccessScreen } from "@/components/SuccessScreen";
-import type { AvailabilityWeek, SubmissionSuccess } from "@/lib/types";
+import type { SubmissionSuccess } from "@/lib/types";
 
 const TFC_LOGO_URL = "https://i.postimg.cc/mDgxQcwq/TFC-Logo-color-1.jpg";
 
 interface SubmittedSummary {
   data: SubmissionSuccess;
-  acceptingIndividual: number;
-  acceptingCouples: number;
-  acceptingFamily: number;
-  availability: AvailabilityWeek | null;
+  acceptingClients: number;
+  specialConsiderations?: string;
 }
 
 function App() {
@@ -31,18 +29,16 @@ function App() {
             Provider Availability Update
           </h1>
           <p className="mt-2 text-muted-foreground max-w-xl">
-            Let us know how many new clients you're accepting and your preferred
-            scheduling windows. Takes about 1 minute.
+            Let us know how many new clients you're accepting and anything we
+            should know when matching. Takes under a minute.
           </p>
         </div>
 
         {submitted ? (
           <SuccessScreen
             data={submitted.data}
-            acceptingIndividual={submitted.acceptingIndividual}
-            acceptingCouples={submitted.acceptingCouples}
-            acceptingFamily={submitted.acceptingFamily}
-            availability={submitted.availability}
+            acceptingClients={submitted.acceptingClients}
+            specialConsiderations={submitted.specialConsiderations}
             onReset={() => {
               setSubmitted(null);
               setFormKey((k) => k + 1);
@@ -55,10 +51,8 @@ function App() {
             onSuccess={(data, fields) =>
               setSubmitted({
                 data,
-                acceptingIndividual: fields.acceptingIndividual,
-                acceptingCouples: fields.acceptingCouples,
-                acceptingFamily: fields.acceptingFamily,
-                availability: fields.availability,
+                acceptingClients: fields.acceptingClients,
+                specialConsiderations: fields.specialConsiderations,
               })
             }
           />

@@ -1,8 +1,8 @@
 # TFC Provider Availability Form
 
 Standalone Vite + React + TypeScript form that lets TFC providers self-report
-how many new clients they're accepting and their preferred scheduling windows.
-The form POSTs to the CRM endpoint at
+how many new clients they're accepting and any special considerations the
+matching team should know about. The form POSTs to the CRM endpoint at
 `POST https://tfc-crm-2-0.fly.dev/api/provider-availability` with a shared
 secret in the `X-Provider-Form-Key` header.
 
@@ -14,9 +14,8 @@ unknown emails.
 
 - Vite + React 18 + TypeScript (strict)
 - Tailwind CSS, theme variables matched to the TFC CRM
-- shadcn/ui-style components (button, input, label, card, alert) hand-rolled into `src/components/ui/`
+- shadcn/ui-style components (button, input, textarea, label, card, alert) hand-rolled into `src/components/ui/`
 - Zod for client-side validation
-- Custom drag-on-grid availability picker — see [src/components/AvailabilityGrid.tsx](src/components/AvailabilityGrid.tsx)
 
 ## Local development
 
@@ -54,14 +53,10 @@ Headers:
   X-Provider-Form-Key: <shared-secret>
 Body:
   {
-    providerEmail: string,            // valid email
-    acceptingIndividual: number,      // integer >= 0
-    acceptingCouples:    number,      // integer >= 0
-    acceptingFamily:     number,      // integer >= 0
-    availability: {                   // or null
-      mon: { start: "HH:MM", end: "HH:MM" }[],
-      tue: ..., wed: ..., thu: ..., fri: ...,
-    } | null,
+    email: string,                    // valid email, must match a known provider
+    acceptingClients: number,         // integer 0..50; 0 means "pause assignments"
+    specialConsiderations?: string,   // optional, ≤ 500 chars; omitted when blank
+    submittedAt: string,              // ISO 8601, generated client-side
   }
 ```
 
@@ -102,8 +97,10 @@ Fly secrets — there are no runtime env vars (it's a static SPA).
 - No "show me my previous submission" — listed as v2 nice-to-have.
 - No magic links or tokens — email is the identity.
 - No analytics or tracking scripts.
-- No mobile-first design — it doesn't break on phones, but the grid
-  is laid out for laptops.
+- No per-service-type or modality breakdown — matching is handled
+  CRM-side from the single accepting-clients number plus the provider's
+  on-record skill profile.
+- No drag-on-grid availability calendar — removed in v2.
 
 ## Tests
 
@@ -111,7 +108,6 @@ Fly secrets — there are no runtime env vars (it's a static SPA).
 npm test
 ```
 
-The availability transform (selection → `AvailabilityWeek`) has unit
-tests in [src/lib/availability.test.ts](src/lib/availability.test.ts).
-That's the highest-risk piece — off-by-one in the contiguous-block
-grouping would silently send wrong data to the CRM.
+There are no unit tests in v2 — the form is plain field collection with
+no transform logic worth covering. Verification is end-to-end against
+the staging CRM endpoint.
