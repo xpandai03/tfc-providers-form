@@ -46,18 +46,17 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
 
     const trimmedConsiderations = specialConsiderations.trim();
     const payload = {
-      email: email.trim(),
+      providerEmail: email.trim(),
       acceptingClients: toIntOrNaN(acceptingClients),
       specialConsiderations: trimmedConsiderations === "" ? undefined : trimmedConsiderations,
-      submittedAt: new Date().toISOString(),
     };
 
     const parsed = submissionPayloadSchema.safeParse(payload);
     if (!parsed.success) {
       const errs: FieldErrors = {};
       for (const issue of parsed.error.issues) {
-        const key = issue.path[0];
-        if (isFieldKey(key) && !errs[key]) errs[key] = issue.message;
+        const key = pathToFieldKey(issue.path[0]);
+        if (key && !errs[key]) errs[key] = issue.message;
       }
       setFieldErrors(errs);
       return;
@@ -77,8 +76,8 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
       case "validation_error": {
         const errs: FieldErrors = {};
         for (const issue of result.issues) {
-          const key = issue.path[0];
-          if (isFieldKey(key) && !errs[key]) errs[key] = issue.message;
+          const key = pathToFieldKey(issue.path[0]);
+          if (key && !errs[key]) errs[key] = issue.message;
         }
         if (Object.keys(errs).length === 0) {
           setTopError({
@@ -266,8 +265,13 @@ function TopErrorAlert({ error }: { error: TopError }) {
   );
 }
 
-function isFieldKey(k: unknown): k is FieldKey {
-  return k === "email" || k === "acceptingClients" || k === "specialConsiderations";
+// Map a Zod issue path (which uses wire-format names like `providerEmail`)
+// back to the UI-side field key used in fieldErrors.
+function pathToFieldKey(head: string | number | undefined): FieldKey | null {
+  if (head === "providerEmail") return "email";
+  if (head === "acceptingClients") return "acceptingClients";
+  if (head === "specialConsiderations") return "specialConsiderations";
+  return null;
 }
 
 function toIntOrNaN(s: string): number {

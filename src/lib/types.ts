@@ -4,7 +4,7 @@ export const SPECIAL_CONSIDERATIONS_MAX = 500;
 export const ACCEPTING_CLIENTS_MAX = 50;
 
 export const submissionPayloadSchema = z.object({
-  email: z
+  providerEmail: z
     .string()
     .trim()
     .min(1, "Please enter your email address")
@@ -19,7 +19,6 @@ export const submissionPayloadSchema = z.object({
     .trim()
     .max(SPECIAL_CONSIDERATIONS_MAX, `Keep it under ${SPECIAL_CONSIDERATIONS_MAX} characters`)
     .optional(),
-  submittedAt: z.string(),
 });
 
 export type SubmissionPayload = z.infer<typeof submissionPayloadSchema>;

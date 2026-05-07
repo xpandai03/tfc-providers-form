@@ -53,10 +53,9 @@ Headers:
   X-Provider-Form-Key: <shared-secret>
 Body:
   {
-    email: string,                    // valid email, must match a known provider
+    providerEmail: string,            // valid email, must match a known provider
     acceptingClients: number,         // integer 0..50; 0 means "pause assignments"
     specialConsiderations?: string,   // optional, ≤ 500 chars; omitted when blank
-    submittedAt: string,              // ISO 8601, generated client-side
   }
 ```
 

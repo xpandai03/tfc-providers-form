@@ -83,7 +83,7 @@ export async function submitAvailability(
     const b = body as Record<string, unknown>;
     return {
       status: "not_found",
-      email: typeof b.email === "string" ? b.email : payload.email,
+      email: typeof b.email === "string" ? b.email : payload.providerEmail,
     };
   }
 
