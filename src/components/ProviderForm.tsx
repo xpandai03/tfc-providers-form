@@ -115,11 +115,11 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
       {topError ? <TopErrorAlert error={topError} /> : null}
 
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center items-center">
           <CardTitle>Who you are</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-2 text-center">
             <Label htmlFor="provider-email">Your TFC email address</Label>
             <Input
               id="provider-email"
@@ -131,6 +131,7 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
               aria-invalid={fieldErrors.email ? true : undefined}
               aria-describedby={fieldErrors.email ? "email-error" : "email-help"}
               disabled={submitting}
+              className="text-center"
             />
             {fieldErrors.email ? (
               <p id="email-error" className="text-sm text-destructive">
@@ -146,14 +147,14 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center items-center">
           <CardTitle>Your availability</CardTitle>
           <CardDescription>
             Tell us how many new clients you're accepting and anything we should know when matching.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="space-y-2">
+          <div className="space-y-2 text-center">
             <Label htmlFor="accepting-clients">How many new clients are you accepting?</Label>
             <Input
               id="accepting-clients"
@@ -168,7 +169,7 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
                 fieldErrors.acceptingClients ? "accepting-clients-error" : "accepting-clients-help"
               }
               disabled={submitting}
-              className="sm:max-w-[160px]"
+              className="sm:max-w-[160px] mx-auto text-center"
             />
             {fieldErrors.acceptingClients ? (
               <p id="accepting-clients-error" className="text-sm text-destructive">
@@ -181,22 +182,10 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
             )}
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-baseline justify-between gap-3">
-              <Label htmlFor="special-considerations">
-                Special considerations <span className="text-muted-foreground font-normal">(optional)</span>
-              </Label>
-              <span
-                className={
-                  considerationsOver
-                    ? "text-xs text-destructive"
-                    : "text-xs text-muted-foreground"
-                }
-                aria-live="polite"
-              >
-                {considerationsLen} / {SPECIAL_CONSIDERATIONS_MAX}
-              </span>
-            </div>
+          <div className="space-y-2 text-center">
+            <Label htmlFor="special-considerations">
+              Special considerations <span className="text-muted-foreground font-normal">(optional)</span>
+            </Label>
             <Textarea
               id="special-considerations"
               placeholder="e.g. prefer afternoon clients, no new trauma intakes for the next month"
@@ -212,6 +201,16 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
               disabled={submitting}
               rows={4}
             />
+            <div
+              className={
+                considerationsOver
+                  ? "text-xs text-destructive"
+                  : "text-xs text-muted-foreground"
+              }
+              aria-live="polite"
+            >
+              {considerationsLen} / {SPECIAL_CONSIDERATIONS_MAX}
+            </div>
             {fieldErrors.specialConsiderations ? (
               <p id="special-considerations-error" className="text-sm text-destructive">
                 {fieldErrors.specialConsiderations}
@@ -225,7 +224,7 @@ export function ProviderForm({ onSuccess }: ProviderFormProps) {
         </CardContent>
       </Card>
 
-      <div className="space-y-2">
+      <div className="flex flex-col items-center space-y-2 text-center">
         <Button type="submit" size="lg" disabled={submitting} className="w-full sm:w-auto">
           {submitting ? "Submitting…" : "Submit availability"}
         </Button>
