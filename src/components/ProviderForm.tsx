@@ -241,7 +241,7 @@ function TopErrorAlert({ error }: { error: TopError }) {
   switch (error.kind) {
     case "not_found":
       title = "We couldn't find that provider";
-      body = `We don't recognize ${error.email}. If you think this is wrong, please contact Lane or Amanda.`;
+      body = `We don't recognize ${error.email}. If you think this is wrong, please contact Lane or Raunek.`;
       break;
     case "auth":
       title = "Something went wrong";
